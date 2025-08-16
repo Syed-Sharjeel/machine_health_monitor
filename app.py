@@ -26,24 +26,24 @@ uploaded_file = st.sidebar.file_uploader("Upload TXT file", type=["txt"])
 if st.sidebar.button('Start Prediction'):
     status = st.success('Data Uploaded Successfully')
     col_names = ['unit_number', 'time_in_cycles'] + [f'op_setting_{i}' for i in range(1,4)] + [f'sensor_{i}' for i in range(1,22)]
-    df_train = pd.read_csv(uploaded_file, sep='\s+', header=None, names=col_names)
+    df = pd.read_csv(uploaded_file, sep='\s+', header=None, names=col_names)
 
-    max_cycle = df_train.groupby('unit_number')['time_in_cycles'].max()
-    df_train['RUL'] = df_train.apply(lambda row: max_cycle[row.unit_number] - row.time_in_cycles, axis=1)
-    df_train = df_train.merge(max_cycle, on='unit_number', suffixes=('', '_max'))
-    df_train.drop('time_in_cycles_max', axis=1, inplace=True)
+    max_cycle = df.groupby('unit_number')['time_in_cycles'].max()
+    df['RUL'] = df.apply(lambda row: max_cycle[row.unit_number] - row.time_in_cycles, axis=1)
+    df = df.merge(max_cycle, on='unit_number', suffixes=('', '_max'))
+    df.drop('time_in_cycles_max', axis=1, inplace=True)
 
-    df_train_y = df_train['RUL']
-    df_train_X = df_train.drop(['unit_number', 'RUL', 'time_in_cycles'], axis=1)
+    df_train_y = df['RUL']
+    df_train_X = df.drop(['unit_number', 'RUL', 'time_in_cycles'], axis=1)
 
     scaler = MinMaxScaler()
 
     scaled_X = scaler.fit_transform(df_train_X)
 
-    X_seq, y_seq = create_sequences_per_unit(df_train, time_steps=30)
+    X_seq, y_seq = create_sequences_per_unit(df, time_steps=30)
 
     st.subheader("Uploaded Sensor Data")
-    st.write(df_train.head())
+    st.write(df.head())
 
     y_pred_scaled = model.predict(X_seq)
     # y_pred = scaler_y.inverse_transform(y_pred_scaled)
